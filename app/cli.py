@@ -1,5 +1,7 @@
 import typer
 import csv
+from tabulate import tabulate
+from sqlmodel import select
 from app.database import create_db_and_tables, get_cli_session, drop_all
 from app.models import *
 from app.auth import encrypt_password
@@ -30,8 +32,14 @@ def initialize():
         print("Database Initialized")
 
 @cli.command()
-def test():
-    pass
+def list_todos():
+    with get_cli_session() as db: # Get a connection to the database
+        data = []
+        for todo in db.exec(select(Todo)).all():
+            data.append(
+                [todo.text, todo.done, todo.user.username,
+                todo.get_cat_list()])
+        print(tabulate(data, headers=["Text", "Done", "User", "Categories"]))
 
 
 if __name__ == "__main__":
